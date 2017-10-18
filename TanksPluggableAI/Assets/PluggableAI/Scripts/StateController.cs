@@ -9,14 +9,16 @@ public class StateController : MonoBehaviour {
 
 	public EnemyStats enemyStats;
 	public Transform eyes;
-
+    public State currentState;
+    public State remainState;
+    public float stateTimeElapsed;
 
 	[HideInInspector] public NavMeshAgent navMeshAgent;
 	[HideInInspector] public Complete.TankShooting tankShooting;
 	[HideInInspector] public List<Transform> wayPointList;
-
+    [HideInInspector] public int nextWaypoint;
+    [HideInInspector] public Transform chaseTarget;
 	private bool aiActive;
-
 
 	void Awake () 
 	{
@@ -28,6 +30,7 @@ public class StateController : MonoBehaviour {
 	{
 		wayPointList = wayPointsFromTankManager;
 		aiActive = aiActivationFromTankManager;
+
 		if (aiActive) 
 		{
 			navMeshAgent.enabled = true;
@@ -37,4 +40,42 @@ public class StateController : MonoBehaviour {
 		}
 	}
 
+    private void Update()
+    {
+        if (!aiActive)
+        {
+            return;
+        }
+
+        currentState.UpdateState(this);
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (currentState != null && eyes != null)
+        {
+            Gizmos.color = currentState.sceneGizmoColor;
+            Gizmos.DrawWireSphere(eyes.position,enemyStats.lookSphereCastRadius);
+        }
+    }
+
+    public void TransitionToState(State nextstate)
+    {
+        if (nextstate != remainState)
+        {
+            currentState = nextstate;
+        }
+    }
+
+    public bool CheckIfCountdownElapsed(float duration)
+    {
+        stateTimeElapsed += Time.deltaTime;
+
+        return stateTimeElapsed >= duration;
+    }
+
+    private void OnExitState()
+    {
+        stateTimeElapsed = 0;
+    }
 }
